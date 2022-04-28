@@ -70,7 +70,8 @@ function processWeatherData(weatherResponse) {
         },
         wind: {
             speed: weatherResponse.wind.speed,
-            get direction() {
+
+            convertDirection() {
                 if (weatherResponse.wind.deg >= 338 && weatherResponse.wind.deg <= 22) {
                     return 'N';
                 } else if (weatherResponse.wind.deg >= 23 && weatherResponse.wind.deg <= 67) {
@@ -88,7 +89,8 @@ function processWeatherData(weatherResponse) {
                 } else if (weatherResponse.wind.deg >= 293 && weatherResponse.wind.deg <= 337) {
                     return 'NW'
                 }
-            }
+            },
+            direction: this.convertDirection()
         }
     };
 

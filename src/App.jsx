@@ -1,19 +1,22 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { View, Flex, Heading, SearchField, TextAreaField } from '@aws-amplify/ui-react';
 import { API } from 'aws-amplify';
 import '@aws-amplify/ui-react/styles.css';
 
 function App() {
     const [ weatherData, setWeatherData ] = useState(null);
-    const inputRef = useRef(null);
+    const cityNameInput = useRef(null);
+    const weatherOutputTextarea = useRef(null);
     
     const getWeatherData = () => {
         const config = {
             response: true, 
             queryStringParameters: {
-                city: inputRef.current.value
+                city: cityNameInput.current.value
             }
         };
+
+        cityNameInput.current.value = '';
         
         API.get('getCurrentWeather', '/v1/getCurrentWeather/', config)
             .then(response => {
@@ -28,6 +31,25 @@ function App() {
                 console.log('Error :>> ', error);
             });
     };
+
+    useEffect(() => {
+        if (!weatherData) return;
+
+        let weatherOutput = `Weather for city ${weatherData.city}\n`;
+        weatherOutput += `Temperature: ${weatherData.temperature}°C\n`;
+        weatherOutput += `Weather conditions: ${weatherData.weatherCondition.type}\n`;
+        weatherOutput += `Wind: ${weatherData.wind.speed} km/h\n`;
+        weatherOutput += `Wind direction: ${weatherData.wind.direction}\n`;
+            /* .replace(/(\w)(\w)?/, (match, l1, l2) => {
+                if (l1 == 'N') {
+                    'North'
+                }
+            }); */
+        weatherOutput += `Pressure: ${weatherData.weatherCondition.pressure} Pa\n`;
+        weatherOutput += `Humidity: ${weatherData.weatherCondition.humidity}%`;
+
+        weatherOutputTextarea.current.value = weatherOutput;
+    }, [ weatherData ]);
 
 
     return (
@@ -47,12 +69,12 @@ function App() {
 
                 <SearchField
                     placeholder="Enter city name"
-                    ref={inputRef}
+                    ref={cityNameInput}
                     onSubmit={getWeatherData}
                 />
 
                 <TextAreaField
-                    value={weatherData}
+                    ref={weatherOutputTextarea}
                     placeholder="The weather data will be here"
                     isReadOnly={false}
                     rows="10"
