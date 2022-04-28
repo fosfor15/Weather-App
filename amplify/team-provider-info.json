@@ -10,6 +10,14 @@
       "StackName": "amplify-weatherapp-dev-224012",
       "StackId": "arn:aws:cloudformation:eu-central-1:543295793859:stack/amplify-weatherapp-dev-224012/062ff490-c72b-11ec-a043-06927304a444",
       "AmplifyAppId": "d1xzriqkuasnni"
+    },
+    "categories": {
+      "function": {
+        "getCurrentWeather": {
+          "deploymentBucketName": "amplify-weatherapp-dev-224012-deployment",
+          "s3Key": "amplify-builds/getCurrentWeather-466c6c32763344535351-build.zip"
+        }
+      }
     }
   }
 }

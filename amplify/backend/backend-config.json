@@ -1,1 +1,22 @@
-{}
+{
+    "function": {
+        "getCurrentWeather": {
+            "build": true,
+            "providerPlugin": "awscloudformation",
+            "service": "Lambda"
+        }
+    },
+    "api": {
+        "getCurrentWeather": {
+            "service": "API Gateway",
+            "providerPlugin": "awscloudformation",
+            "dependsOn": [
+                {
+                    "category": "function",
+                    "resourceName": "getCurrentWeather",
+                    "attributes": ["Name", "Arn"]
+                }
+            ]
+        }
+    }
+}
