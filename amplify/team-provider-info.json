@@ -15,7 +15,7 @@
       "function": {
         "getCurrentWeather": {
           "deploymentBucketName": "amplify-weatherapp-dev-224012-deployment",
-          "s3Key": "amplify-builds/getCurrentWeather-466c6c32763344535351-build.zip"
+          "s3Key": "amplify-builds/getCurrentWeather-47344163797044433958-build.zip"
         }
       }
     }
