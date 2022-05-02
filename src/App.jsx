@@ -11,7 +11,7 @@ function App() {
     const [ weatherOutput, setWeatherOutput ] = useState('');
 
     const changeCity = (event) => {
-        setCity(event.target.value);
+        setCity(event.target.value.trim());
     };
 
     const clearCity = () => {
@@ -19,12 +19,23 @@ function App() {
     };
     
     const getWeatherData = () => {
+        if (!city) {
+            setWeatherOutput('No city specified');
+            return;
+        }
+
+        const cityRegexp = /^\p{L}[\p{L}\d\- ]*/u;
+        if (!cityRegexp.test(city)) {
+            setWeatherOutput('The city name should start/ consist only of letters and may also contain numbers, spaces and hyphens');
+            return;
+        }
+
         const config = {
-            response: true, 
+            response: true,
             queryStringParameters: { city }
         };
 
-        setWeatherOutput('');
+        setWeatherOutput('Loading...');
         
         API.get('getCurrentWeather', '/v1/getCurrentWeather/', config)
             .then(response => {
@@ -120,7 +131,7 @@ function App() {
                     placeholder="The weather information will be placed here"
                     value={weatherOutput}
                     isReadOnly={true}
-                    whiteSpace="pre"
+                    whiteSpace="pre-wrap"
                     rows="10"
                 />
             </Flex>
