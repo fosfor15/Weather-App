@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 
 import { View, Flex, Heading, SearchField, TextAreaField } from '@aws-amplify/ui-react';
 import { API } from 'aws-amplify';
@@ -9,9 +9,7 @@ function App() {
     const [ city, setCity ] = useState({
         current: '',
         list: JSON.parse(localStorage.getItem('citylist')) || []
-    });
-    const [ weatherData, setWeatherData ] = useState(null);
-    const [ weatherOutput, setWeatherOutput ] = useState('');
+    });    
 
     const changeCurrentCity = (event) => {
         setCity({
@@ -26,6 +24,9 @@ function App() {
             current: ''
         });
     };
+
+
+    const [ weatherOutput, setWeatherOutput ] = useState('');
     
     const getWeatherData = () => {
         if (!city.current) {
@@ -101,7 +102,6 @@ function App() {
         }
     };
 
-
     const displayWeatherData = (responseData) => {
         const weatherData = JSON.parse(responseData.response);
 
@@ -157,7 +157,7 @@ function App() {
         }
 
         const processTime = JSON.parse(responseData.processTime)
-            .reduce((sum, comp) => sum + comp / 1e6);
+            .reduce((sum, comp) => sum * 1e3 + comp / 1e6);
         _weatherOutput += `Process time: ${processTime} ms`;
 
         setWeatherOutput(_weatherOutput);
@@ -201,15 +201,15 @@ function App() {
                 />
             </Flex>
         </View>
-    )
+    );
 }
 
 export default App;
 
-
 const styles = {
     app: {
-        width: '500px',
+        maxWidth: '500px',
+        width: '90%',
         margin: '40px auto'
     },
     heading: {
