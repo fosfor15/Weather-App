@@ -50,10 +50,11 @@ function App() {
             .then(response => {
                 console.log('Response :>> ', response);
 
-                const _weatherData = JSON.parse(response.data.response);
-                console.log('Weather data :>> ', _weatherData);
-
-                setWeatherData(_weatherData);
+                if (response.data.status == 200) {
+                    displayWeatherData(response.data);
+                } else if (response.data.status == 204) {
+                    setWeatherOutput(response.data.response);
+                }
             })
             .catch(error => {
                 console.log('Error :>> ', error);
@@ -101,59 +102,66 @@ function App() {
     };
 
 
-    const displayWeatherData = () => {
-        if (!weatherData) return;
+    const displayWeatherData = (responseData) => {
+        const weatherData = JSON.parse(responseData.response);
 
-        let _weatherOutput = `Weather for city ${city.current}\n\n`;
+        let _weatherOutput = `Weather for city ${city.current}\n`;
+        
+        const time = new Date(weatherData.time).toLocaleString();
+        _weatherOutput += `Date, time: ${time}\n\n`;
 
         _weatherOutput += `Weather conditions: ${weatherData.weatherCondition.type}\n`;
         _weatherOutput += `Temperature: ${weatherData.temperature}°C\n`;
         _weatherOutput += `Wind: ${weatherData.wind.speed} km/h\n`;
 
-        if (weatherData.wind.direction) {
-            _weatherOutput += `Wind direction: ${weatherData.wind.direction
-                .replace(/(\w)(\w)?/, (match, l1, l2) => {
-                    let output = match;
-    
-                    switch (l1) {
-                        case 'N':
-                            output += ' (North';
-                            break;
-                        case 'E':
-                            output += ' (East';
-                            break;
-                        case 'S':
-                            output += ' (South';
-                            break;
-                        case 'W':
-                            output += ' (West';
-                            break;
-                        }
-    
-                    switch (l2) {
-                        case 'E':
-                            output += ' East)';
-                            break;
-                        case 'W':
-                            output += ' West)';
-                            break;
-                        default:
-                            output += ')';
+        _weatherOutput += `Wind direction: ${weatherData.wind.direction
+            .replace(/(\w)(\w)?/, (match, l1, l2) => {
+                let output = match;
+
+                switch (l1) {
+                    case 'N':
+                        output += ' (North';
+                        break;
+                    case 'E':
+                        output += ' (East';
+                        break;
+                    case 'S':
+                        output += ' (South';
+                        break;
+                    case 'W':
+                        output += ' (West';
+                        break;
                     }
-    
-                    return output;
-                })}\n`;
-        } else {
-            _weatherOutput += 'Wind direction: unknown\n'; 
-        }
+
+                switch (l2) {
+                    case 'E':
+                        output += ' East)';
+                        break;
+                    case 'W':
+                        output += ' West)';
+                        break;
+                    default:
+                        output += ')';
+                }
+
+                return output;
+            })}\n`;
 
         _weatherOutput += `Pressure: ${weatherData.weatherCondition.pressure} Pa\n`;
-        _weatherOutput += `Humidity: ${weatherData.weatherCondition.humidity}%`;
+        _weatherOutput += `Humidity: ${weatherData.weatherCondition.humidity}%\n\n`;
+
+        if (responseData.isCityCached) {
+            _weatherOutput += 'Cached weather data\n';
+        } else {
+            _weatherOutput += 'New weather data\n';
+        }
+
+        const processTime = JSON.parse(responseData.processTime)
+            .reduce((sum, comp) => sum + comp / 1e6);
+        _weatherOutput += `Process time: ${processTime} ms`;
 
         setWeatherOutput(_weatherOutput);
     };
-
-    useEffect(displayWeatherData, [ weatherData ]);
 
 
     return (
@@ -189,7 +197,7 @@ function App() {
                     value={weatherOutput}
                     isReadOnly={true}
                     whiteSpace="pre-wrap"
-                    rows="10"
+                    rows="12"
                 />
             </Flex>
         </View>

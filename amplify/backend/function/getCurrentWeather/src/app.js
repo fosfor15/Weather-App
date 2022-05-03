@@ -92,6 +92,7 @@ app.get('/v1/getCurrentWeather/*', async (req, res) => {
     
     res.json({
         response: weatherData,
+        isCityCached,
         status: 200,
         processTime: JSON.stringify(processTime)
     });
