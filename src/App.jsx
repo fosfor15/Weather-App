@@ -6,36 +6,45 @@ import '@aws-amplify/ui-react/styles.css';
 
 
 function App() {
-    const [ city, setCity ] = useState('');
+    const [ city, setCity ] = useState({
+        current: '',
+        list: JSON.parse(localStorage.getItem('citylist')) || []
+    });
     const [ weatherData, setWeatherData ] = useState(null);
     const [ weatherOutput, setWeatherOutput ] = useState('');
 
-    const changeCity = (event) => {
-        setCity(event.target.value.trim());
+    const changeCurrentCity = (event) => {
+        setCity({
+            ...city,
+            current: event.target.value.trim()
+        });
     };
 
-    const clearCity = () => {
-        setCity('');
+    const clearCurrentCity = () => {
+        setCity({
+            ...city,
+            current: ''
+        });
     };
     
     const getWeatherData = () => {
-        if (!city) {
+        if (!city.current) {
             setWeatherOutput('No city specified');
             return;
         }
 
         const cityRegexp = /^\p{L}[\p{L}\d\- ]*/u;
-        if (!cityRegexp.test(city)) {
+        if (!cityRegexp.test(city.current)) {
             setWeatherOutput('The city name should start/ consist only of letters and may also contain numbers, spaces and hyphens');
             return;
         }
 
         const config = {
             response: true,
-            queryStringParameters: { city }
+            queryStringParameters: {
+                city: city.current
+            }
         };
-
-        setWeatherOutput('Loading...');
         
         API.get('getCurrentWeather', '/v1/getCurrentWeather/', config)
             .then(response => {
@@ -49,12 +58,53 @@ function App() {
             .catch(error => {
                 console.log('Error :>> ', error);
             });
+
+        setWeatherOutput('Loading...');
+
+        if (!city.list.includes(city.current)) {
+            const _cityList = [ ...city.list, city.current ];
+
+            setCity({
+                ...city,
+                list: _cityList
+            });
+
+            localStorage.setItem('citylist', JSON.stringify(_cityList));
+            console.log('localStorage :>> ', localStorage);
+        }
     };
+
+    const handleKeyDown = (event) => {
+        if (event.code == 'Enter') {
+            getWeatherData();
+        } else if (event.ctrlKey && event.code == 'KeyL') {
+            event.preventDefault();
+
+            if (city.current) {
+                setCity({
+                    ...city,
+                    current: ''
+                });
+                setWeatherOutput('City input is cleared');
+
+            } else {
+                setCity({
+                    ...city,
+                    list: []
+                });
+                localStorage.clear();
+                setWeatherOutput('City list is cleared');
+            }
+
+            setTimeout(() => setWeatherOutput(''), 2e3);
+        }
+    };
+
 
     const displayWeatherData = () => {
         if (!weatherData) return;
 
-        let _weatherOutput = `Weather for city ${city}\n\n`;
+        let _weatherOutput = `Weather for city ${city.current}\n\n`;
 
         _weatherOutput += `Weather conditions: ${weatherData.weatherCondition.type}\n`;
         _weatherOutput += `Temperature: ${weatherData.temperature}°C\n`;
@@ -121,11 +171,18 @@ function App() {
 
                 <SearchField
                     placeholder="Enter city name"
-                    value={city}
-                    onChange={changeCity}
-                    onClear={clearCity}
+                    value={city.current}
+                    list="city-list"
+                    onChange={changeCurrentCity}
+                    onClear={clearCurrentCity}
+                    onKeyDown={handleKeyDown}
                     onSubmit={getWeatherData}
                 />
+                <datalist id="city-list">
+                    { city.list.length &&
+                    city.list.map((city, ind) =>
+                        <option key={ind}>{city}</option>) }
+                </datalist>
 
                 <TextAreaField
                     placeholder="The weather information will be placed here"
