@@ -14,7 +14,7 @@ function App() {
     const changeCurrentCity = (event) => {
         setCity({
             ...city,
-            current: event.target.value.trim()
+            current: event.target.value
         });
     };
 
@@ -31,12 +31,14 @@ function App() {
     const getWeatherData = () => {
         if (!city.current) {
             setWeatherOutput('No city specified');
+            setTimeout(() => setWeatherOutput(''), 2e3);
             return;
         }
 
         const cityRegexp = /^\p{L}[\p{L}\d\- ]*/u;
         if (!cityRegexp.test(city.current)) {
             setWeatherOutput('The city name should start/ consist only of letters and may also contain numbers, spaces and hyphens');
+            setTimeout(() => setWeatherOutput(''), 2e3);
             return;
         }
 
@@ -59,12 +61,13 @@ function App() {
             })
             .catch(error => {
                 console.log('Error :>> ', error);
+                setWeatherOutput('Network error. Try again a few minutes later.');
             });
 
         setWeatherOutput('Loading...');
 
         if (!city.list.includes(city.current)) {
-            const _cityList = [ ...city.list, city.current ];
+            const _cityList = [ ...city.list, city.current ].sort();
 
             setCity({
                 ...city,
@@ -79,7 +82,8 @@ function App() {
     const handleKeyDown = (event) => {
         if (event.code == 'Enter') {
             getWeatherData();
-        } else if (event.ctrlKey && event.code == 'KeyL') {
+        }
+        else if (event.ctrlKey && event.code == 'KeyL') {
             event.preventDefault();
 
             if (city.current) {
@@ -157,7 +161,7 @@ function App() {
         }
 
         const processTime = JSON.parse(responseData.processTime)
-            .reduce((sum, comp) => sum * 1e3 + comp / 1e6);
+            .reduce((sum, comp) => sum * 1e3 + comp / 1e6).toFixed(2);
         _weatherOutput += `Process time: ${processTime} ms`;
 
         setWeatherOutput(_weatherOutput);
