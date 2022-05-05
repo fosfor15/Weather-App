@@ -1,8 +1,8 @@
 {
   "version": 1,
   "paths": {
-    "/v1/getCurrentWeather": {
-      "name": "/v1/getCurrentWeather",
+    "/getCurrentWeather": {
+      "name": "/getCurrentWeather",
       "lambdaFunction": "getCurrentWeather",
       "permissions": {
         "setting": "open"

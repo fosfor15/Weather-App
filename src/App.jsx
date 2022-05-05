@@ -1,7 +1,7 @@
 import { useState } from 'react';
 
-import { View, Flex, Heading, SearchField, TextAreaField } from '@aws-amplify/ui-react';
 import { API } from 'aws-amplify';
+import { View, Flex, Heading, SearchField, TextAreaField } from '@aws-amplify/ui-react';
 import '@aws-amplify/ui-react/styles.css';
 
 
@@ -49,7 +49,7 @@ function App() {
             }
         };
         
-        API.get('getCurrentWeather', '/v1/getCurrentWeather/', config)
+        API.get('getCurrentWeather', '/getCurrentWeather', config)
             .then(response => {
                 console.log('Response :>> ', response);
 

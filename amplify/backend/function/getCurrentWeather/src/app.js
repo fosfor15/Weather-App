@@ -43,7 +43,7 @@ app.use((req, res, next) => {
 
 
 // Processing the GET-requests
-app.get('/v1/getCurrentWeather/*', async (req, res) => {
+app.get('/getCurrentWeather*', async (req, res) => {
     console.log('Have GET-request 😎👌');
 
     const queryParams = req.apiGateway.event.queryStringParameters;
