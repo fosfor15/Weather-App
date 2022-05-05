@@ -2,8 +2,18 @@
 const express = require('express');
 const bodyParser = require('body-parser');
 const awsServerlessExpressMiddleware = require('aws-serverless-express/middleware');
+const { SecretsManagerClient, GetSecretValueCommand } = require('@aws-sdk/client-secrets-manager');
 const https = require('https');
 const redis = require('redis');
+
+
+// Processing with SecretsManager
+const secretManagerClient = new SecretsManagerClient({
+    region: 'eu-central-1'
+});
+const getSecretValueCommand = new GetSecretValueCommand({
+    SecretId: 'arn:aws:secretsmanager:eu-central-1:543295793859:secret:open-weather-api-key-JSODzJ'
+});
 
 
 // Processing with ElastiCache and Redis
@@ -36,21 +46,14 @@ app.use((req, res, next) => {
 app.get('/v1/getCurrentWeather/*', async (req, res) => {
     console.log('Have GET-request 😎👌');
 
-    let processTime = process.hrtime();
-
     const queryParams = req.apiGateway.event.queryStringParameters;
 
     // If no city is specified
     if (!queryParams?.city) {
-        processTime = process.hrtime(processTime);
-
-        res.json({
-            response: 'No city is specified',
-            status: 204,
-            processTime: JSON.stringify(processTime)
+        res.status(204).json({
+            response: 'No city is specified'
         });
-
-        return;
+        res.end();
     }
 
     // City name
@@ -64,6 +67,7 @@ app.get('/v1/getCurrentWeather/*', async (req, res) => {
     console.log('Is key city exists :>> ', isCityCached);
 
     let weatherData = '';
+    let processTime = process.hrtime();
 
     // If weather data for specified city exists
     if (isCityCached == 1) {
@@ -90,12 +94,12 @@ app.get('/v1/getCurrentWeather/*', async (req, res) => {
         console.timeEnd('Save weather data to cache');
     }
     
-    res.json({
+    res.status(200).json({
         response: weatherData,
         isCityCached,
-        status: 200,
-        processTime: JSON.stringify(processTime)
+        processTime
     });
+    res.end();
 });
 
 // Server start
@@ -105,10 +109,16 @@ module.exports = app;
 
 
 // Utilities
-function getWeatherDataRequest(city) {
+async function getWeatherDataRequest(city) {
     console.log('Make GET-request to OpenWeather 😎👌');
+
+    console.time('API key');
+    const secretManagerResponse = await secretManagerClient.send(getSecretValueCommand);
+    const apiKey = JSON.parse(secretManagerResponse.SecretString).apiKey;
+    console.log('API key :>> ', apiKey);
+    console.timeEnd('API key');
     
-    const url = `https://api.openweathermap.org/data/2.5/weather?q=${city}&appid=42f86ded5372a4d4c8d2a8aab4e8f649`;
+    const url = `https://api.openweathermap.org/data/2.5/weather?q=${city}&appid=${apiKey}`;
     
     return new Promise((resolve, reject) => {
         console.log('Pre launch https.get');

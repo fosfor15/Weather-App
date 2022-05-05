@@ -53,9 +53,9 @@ function App() {
             .then(response => {
                 console.log('Response :>> ', response);
 
-                if (response.data.status == 200) {
+                if (response.status == 200) {
                     displayWeatherData(response.data);
-                } else if (response.data.status == 204) {
+                } else if (response.status == 204) {
                     setWeatherOutput(response.data.response);
                 }
             })
@@ -160,7 +160,7 @@ function App() {
             _weatherOutput += 'New weather data\n';
         }
 
-        const processTime = JSON.parse(responseData.processTime)
+        const processTime = responseData.processTime
             .reduce((sum, comp) => sum * 1e3 + comp / 1e6).toFixed(2);
         _weatherOutput += `Process time: ${processTime} ms`;
 
