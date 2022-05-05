@@ -1,0 +1,61 @@
+
+:root {
+    --amplify-components-fieldcontrol-border-color: #414d59;
+    --amplify-components-button-hover-border-color: #414d59;
+    --amplify-components-button-link-hover-background-color: none;
+    --amplify-components-button-hover-background-color: #cafdd1;
+    --amplify-components-button-link-active-background-color: none;
+    --amplify-components-fieldcontrol-focus-box-shadow: 0px 0px 0px 1px
+        var(--amplify-components-button-primary-background-color);
+    --amplify-components-heading-1-font-weight: 400;
+    --amplify-components-icon-height: 1.2em;
+}
+
+[data-amplify-authenticator] [data-amplify-container] {
+    width: 100%;
+}
+
+[data-amplify-authenticator] [data-amplify-router] {
+    border-color: #5797a3;
+    background-color: transparent;
+}
+
+[data-amplify-authenticator] [data-state=inactive] {
+    background-color: transparent;
+}
+
+.amplify-tabs[data-indicator-position=top] {
+    border-color: transparent;
+}
+
+.amplify-tabs-item[data-state=active] {
+    border-color: var(--amplify-components-button-primary-background-color);
+    border-top-width: 3px;
+    color: var(--amplify-components-tabs-item-color);
+}
+.amplify-tabs-item[data-state=inactive] {
+    border-color: transparent;
+}
+
+.amplify-input:focus,
+.amplify-textarea:focus {
+    border-color: var(--amplify-components-button-primary-background-color);
+}
+
+.amplify-searchfield__search {
+    background-color: var(--amplify-components-button-primary-background-color);
+    border-color: var(--amplify-components-button-primary-background-color);
+    color: var(--amplify-components-button-primary-color);
+}
+.amplify-searchfield__search:hover,
+.amplify-searchfield__search:focus,
+.amplify-field__show-password:hover,
+.amplify-field__show-password:focus {
+    background-color: var(--amplify-components-button-primary-hover-background-color);
+    color: var(--amplify-components-button-primary-color);
+}
+
+
+.amplify-button[data-variation=link] {
+    color: rgb(16, 16, 16);
+}

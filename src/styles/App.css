@@ -1,0 +1,24 @@
+
+* {
+    box-sizing: border-box;
+    font-family: 'Segoe UI', sans-serif;
+    font-size: 20px;
+}
+
+body {
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
+    margin: 0;
+    background-image: linear-gradient(to right bottom, #afffa1, #b1ffff);
+}
+
+.app {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    max-width: 500px;
+    width: 90%;
+    min-width: 300px;
+    margin: 60px auto 40px;
+}

@@ -1,7 +1,15 @@
 import { useState } from 'react';
 
+import Header from './components/Header';
+import AccountStatus from './components/AccountStatus';
+import GetWeatherForm from './components/GetWeatherForm';
+import WeatherDisplay from './components/WeatherDisplay';
+
 import { API } from 'aws-amplify';
-import { View, Flex, Heading, SearchField, TextAreaField } from '@aws-amplify/ui-react';
+import { Authenticator } from '@aws-amplify/ui-react';
+
+import './styles/App.css';
+import './styles/AmplifyUI.css';
 import '@aws-amplify/ui-react/styles.css';
 
 
@@ -18,11 +26,12 @@ function App() {
         });
     };
 
-    const clearCurrentCity = () => {
+    const clearCurrentCityWeather = () => {
         setCity({
             ...city,
             current: ''
         });
+        setWeatherOutput('');
     };
 
 
@@ -166,59 +175,32 @@ function App() {
 
         setWeatherOutput(_weatherOutput);
     };
-
+    
 
     return (
-        <View>
-            <Flex
-                className="App"
-                direction="column"
-                gap="1rem"
-                style={styles.app}
-            >
-                <Heading
-                    level="1"
-                    style={styles.heading}
-                >Weather App</Heading>
-
-                <SearchField
-                    placeholder="Enter city name"
-                    value={city.current}
-                    list="city-list"
-                    onChange={changeCurrentCity}
-                    onClear={clearCurrentCity}
-                    onKeyDown={handleKeyDown}
-                    onSubmit={getWeatherData}
-                />
-                <datalist id="city-list">
-                    { city.list.length &&
-                    city.list.map((city, ind) =>
-                        <option key={ind}>{city}</option>) }
-                </datalist>
-
-                <TextAreaField
-                    placeholder="The weather information will be placed here"
-                    value={weatherOutput}
-                    isReadOnly={true}
-                    whiteSpace="pre-wrap"
-                    rows="12"
-                />
-            </Flex>
-        </View>
+        <div className="app">
+            <Authenticator
+                components={{ Header }}
+            >{ account => (
+                <>
+                    <Header />
+                    <AccountStatus
+                        { ...account }
+                    />
+                    <GetWeatherForm
+                        city={city}
+                        onChange={changeCurrentCity}
+                        onClear={clearCurrentCityWeather}
+                        onKeyDown={handleKeyDown}
+                        onSubmit={getWeatherData}
+                    />
+                    <WeatherDisplay
+                        weatherOutput={weatherOutput}
+                    />
+                </>
+            )}</Authenticator>
+        </div>
     );
 }
 
 export default App;
-
-const styles = {
-    app: {
-        maxWidth: '500px',
-        width: '90%',
-        margin: '40px auto'
-    },
-    heading: {
-        marginBottom: '30px',
-        fontWeight: '400',
-        textAlign: 'center'
-    }
-};

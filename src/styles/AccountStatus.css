@@ -1,0 +1,21 @@
+
+.account-status {
+    position: absolute;
+    top: 16px;
+    right: 20px;
+    display: flex;
+    align-items: center;
+}
+
+.account-status h2 {
+    margin: 0;
+    color: #045;
+}
+
+.account-status button {
+    margin-left: 18px;
+    padding: 6px 18px;
+    border: none;
+    background-color: unset;
+    cursor: pointer;
+}

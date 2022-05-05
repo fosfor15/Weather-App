@@ -53,7 +53,7 @@ app.get('/getCurrentWeather*', async (req, res) => {
         res.status(204).json({
             response: 'No city is specified'
         });
-        res.end();
+        return;
     }
 
     // City name
@@ -99,7 +99,6 @@ app.get('/getCurrentWeather*', async (req, res) => {
         isCityCached,
         processTime
     });
-    res.end();
 });
 
 // Server start

@@ -6,7 +6,6 @@ import awsExports from './aws-exports';
 Amplify.configure(awsExports);
 
 import App from './App';
-import './index.css';
 
 ReactDOM.createRoot(document.getElementById('root'))
     .render(
