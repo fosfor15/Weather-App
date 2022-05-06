@@ -1,30 +1,12 @@
 // Imports
 const express = require('express');
 const bodyParser = require('body-parser');
-const awsServerlessExpressMiddleware = require('aws-serverless-express/middleware');
-const { SecretsManagerClient, GetSecretValueCommand } = require('@aws-sdk/client-secrets-manager');
+
 const https = require('https');
 const redis = require('redis');
 
-
-// Processing with SecretsManager
-const secretManagerClient = new SecretsManagerClient({
-    region: 'eu-central-1'
-});
-const getSecretValueCommand = new GetSecretValueCommand({
-    SecretId: 'arn:aws:secretsmanager:eu-central-1:543295793859:secret:open-weather-api-key-JSODzJ'
-});
-
-
-// Processing with ElastiCache and Redis
-const redisClient = redis.createClient({
-    url: 'redis://weather-app-cache.blzsgd.ng.0001.euc1.cache.amazonaws.com:6379'
-});
-redisClient.connect();
-
-redisClient.on('connect', () => console.log('Redis client is connecting!'));
-redisClient.on('ready', () => console.log('Redis client is ready!'));
-redisClient.on('error', (err) => console.log('Redis client error :>> ', err));
+const awsServerlessExpressMiddleware = require('aws-serverless-express/middleware');
+const { SecretsManagerClient, GetSecretValueCommand } = require('@aws-sdk/client-secrets-manager');
 
 
 // Declaring a new express app
@@ -42,63 +24,87 @@ app.use((req, res, next) => {
 });
 
 
-// Processing the GET-requests
-app.get('/getCurrentWeather*', async (req, res) => {
+// Processing of SecretsManager
+const secretManagerClient = new SecretsManagerClient({
+    region: 'eu-central-1'
+});
+const getSecretValueCommand = new GetSecretValueCommand({
+    SecretId: 'arn:aws:secretsmanager:eu-central-1:543295793859:secret:open-weather-api-key-JSODzJ'
+});
+
+
+// Processing of ElastiCache and Redis
+const redisClient = redis.createClient({
+    url: 'redis://weather-app-cache.blzsgd.ng.0001.euc1.cache.amazonaws.com:6379'
+});
+redisClient.connect();
+
+
+// Error class for describing server errors
+class ServerError extends Error {
+    constructor(status, description) {
+        super(description);
+        this.name = 'Server Error';
+        this.status = status;
+        this.description = description;
+    }
+}
+
+
+// Processing the GET-request
+app.get('/getCurrentWeather*', async (request, response) => {
     console.log('Have GET-request 😎👌');
 
-    const queryParams = req.apiGateway.event.queryStringParameters;
-
-    // If no city is specified
-    if (!queryParams?.city) {
-        res.status(204).json({
-            response: 'No city is specified'
-        });
-        return;
-    }
-
     // City name
-    const city = queryParams.city;
-    console.log('City :>> ', city);
-
-    // Check is weather data for specified city exists
-    console.time('Is key city exists');
-    const isCityCached = await redisClient.exists(city);
-    console.timeEnd('Is key city exists');
-    console.log('Is key city exists :>> ', isCityCached);
-
+    const city = request.query?.city;
+    // Weather data in needed structure
     let weatherData = '';
-    let processTime = process.hrtime();
-
-    // If weather data for specified city exists
-    if (isCityCached == 1) {
-        // Get cached weather data
-        console.time('Get cached weather data');
-        weatherData = await redisClient.get(city);
-        processTime = process.hrtime(processTime);
-        console.timeEnd('Get cached weather data');
-        console.log('Get cached weather data :>> ', weatherData);
-    }
-    // In other case
-    else {
-        // Get new weather data from OpenWeather
-        console.time('Get new weather data from OpenWeather');
-        const weatherResponse = await getWeatherDataRequest(city);
-        processTime = process.hrtime(processTime);
-        console.timeEnd('Get new weather data from OpenWeather');
-
-        weatherData = convertWeatherData(weatherResponse);
-
-        console.time('Save weather data to cache');
-        const saveToCacheResponse = await saveToCache(city, weatherData);
-        console.log('Save weather data to cache :>> ', saveToCacheResponse);
-        console.timeEnd('Save weather data to cache');
-    }
     
-    res.status(200).json({
-        response: weatherData,
-        isCityCached,
-        processTime
-    });
+    // Main processing
+    try {
+        // If no city is specified
+        if (!city) {
+            throw new ServerError(204, 'No city is specified');
+        }
+
+        // Start point for measuring of request processing time
+        let processTime = process.hrtime();
+
+        // Check is weather data for specified city cached
+        const isWeatherDataCached = await redisClient.exists(city);
+
+        // If weather data for specified city cached
+        if (isWeatherDataCached) {
+            // Get cached weather data
+            weatherData = await redisClient.get(city);
+            processTime = process.hrtime(processTime);
+        }
+        // If needed to get new weather data from OpenWeather
+        else {
+            // Get and convert new weather data from OpenWeather
+            const newWeatherData = await getNewWeatherData(city);
+            weatherData = convertWeatherData(newWeatherData);
+            processTime = process.hrtime(processTime);
+
+            // Saving to cache new weather data
+            redisClient.set(city, weatherData, { EX: 60, NX: true });
+        }
+
+        // Sending good response
+        response.json({
+            status: 200,
+            payload: weatherData,
+            isCached: isWeatherDataCached,
+            processTime
+        });
+    }
+    // Processing in case of throwing ServerError
+    catch (error) {
+        response.json({
+            status: error.status,
+            error
+        });
+    }
 });
 
 // Server start
@@ -107,45 +113,41 @@ app.listen(3000);
 module.exports = app;
 
 
-// Utilities
-async function getWeatherDataRequest(city) {
-    console.log('Make GET-request to OpenWeather 😎👌');
-
-    console.time('API key');
+// Async function for sending request to OpenWeather API for fetching new weather data
+async function getNewWeatherData(city) {
     const secretManagerResponse = await secretManagerClient.send(getSecretValueCommand);
     const apiKey = JSON.parse(secretManagerResponse.SecretString).apiKey;
-    console.log('API key :>> ', apiKey);
-    console.timeEnd('API key');
     
     const url = `https://api.openweathermap.org/data/2.5/weather?q=${city}&appid=${apiKey}`;
     
     return new Promise((resolve, reject) => {
-        console.log('Pre launch https.get');
-
-        const req = https.get(url, res => {
-            console.log('Launch https.get');
+        const request = https.get(url, response => {
+            if (response.statusCode != 200) {
+                reject(new ServerError(response.statusCode,
+                    'OpenWeather API request is failed'));
+            }
 
             let rawData = '';
-
-            res.on('data', chunk => {
+            response.on('data', chunk => {
                 rawData += chunk;
             });
 
-            res.on('end', () => {
+            response.on('end', () => {
                 try {
                     resolve(JSON.parse(rawData));
-                } catch (err) {
-                    reject(new Error(err));
+                } catch (error) {
+                    reject(new ServerError(500, error.message));
                 }
             });
         });
 
-        req.on('error', err => {
-            reject(new Error(err));
+        request.on('error', error => {
+            reject(new ServerError(500, error.message));
         });
     });
 }
 
+// Function for converting weather data to needed structure
 function convertWeatherData(weatherResponse) {
     const getWordDirection = (weatherResponse) => {
         const degDirection = Math.round(weatherResponse.wind.deg);
@@ -190,9 +192,4 @@ function convertWeatherData(weatherResponse) {
     };
 
     return JSON.stringify(weatherData);
-}
-
-async function saveToCache(city, weatherData) {
-    await redisClient.set(city, weatherData);
-    return await redisClient.expire(city, 60);
 }

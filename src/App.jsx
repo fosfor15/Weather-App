@@ -40,8 +40,11 @@ function PrimaryInterface() {
             ...city,
             current: ''
         });
-        setWeatherOutput('City and weather display is cleared');
-        setTimeout(() => setWeatherOutput(''), 2e3);
+
+        if (weatherOutput) {
+            setWeatherOutput('City and weather display is cleared');
+            setTimeout(() => setWeatherOutput(''), 2e3);
+        }
     };
 
     const clearCityList = () => {
@@ -86,7 +89,7 @@ function PrimaryInterface() {
                 'Authorization': user.signInUserSession.idToken.jwtToken
             },
             queryStringParameters: {
-                city: city.current
+                'city': city.current
             }
         };
         console.log('Request config :>> ', config);
@@ -95,16 +98,14 @@ function PrimaryInterface() {
             .then(response => {
                 console.log('Response :>> ', response);
 
-                if (response.status == 200) {
+                if (response.data.status == 200) {
                     displayWeatherData(response.data);
-                } else if (response.status == 204) {
-                    setWeatherOutput(response.data.response);
+                } else {
+                    const { name, description } = response.data.error;
+                    setWeatherOutput(`${name}:\n${description}`);
                 }
             })
-            .catch(error => {
-                console.log('Error :>> ', error);
-                setWeatherOutput('Network error\nTry again in a few minutes');
-            });
+            .catch(error => setWeatherOutput(error));
 
         setWeatherOutput('Loading...');
 
@@ -117,7 +118,8 @@ function PrimaryInterface() {
     };
 
     const displayWeatherData = (responseData) => {
-        const weatherData = JSON.parse(responseData.response);
+        const weatherData = JSON.parse(responseData.payload);
+
         let _weatherOutput = '';
 
         _weatherOutput = `Weather for city ${city.current}\n`;        
@@ -164,7 +166,7 @@ function PrimaryInterface() {
         _weatherOutput += `Pressure: ${weatherData.weatherCondition.pressure} Pa\n`;
         _weatherOutput += `Humidity: ${weatherData.weatherCondition.humidity}%\n\n`;
 
-        _weatherOutput += `${ responseData.isCityCached ? 'Cached' : 'New' } weather data\n`;
+        _weatherOutput += `${ responseData.isCached ? 'Cached' : 'New' } weather data\n`;
 
         const processTime = responseData.processTime
             .reduce((sum, comp) => sum * 1e3 + comp / 1e6).toFixed(2);
