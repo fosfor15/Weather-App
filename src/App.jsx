@@ -24,9 +24,9 @@ function PrimaryInterface() {
 
     useEffect(() => {
         localStorage.setItem('cityList', JSON.stringify(city.list))
-        console.log(localStorage);
+        console.log('cityList from localStorage :>> ', localStorage.getItem('cityList'));
     }, [ city.list ]);
-    
+
 
     const changeCurrentCity = (event) => {
         setCity({
@@ -35,12 +35,22 @@ function PrimaryInterface() {
         });
     };
 
-    const clearInterface = () => {
+    const clearCurrentCity = () => {
         setCity({
             ...city,
             current: ''
         });
-        setWeatherOutput('');
+        setWeatherOutput('City and weather display is cleared');
+        setTimeout(() => setWeatherOutput(''), 2e3);
+    };
+
+    const clearCityList = () => {
+        setCity({
+            ...city,
+            list: []
+        });
+        setWeatherOutput('City list is cleared');
+        setTimeout(() => setWeatherOutput(''), 2e3);
     };
 
 
@@ -53,6 +63,16 @@ function PrimaryInterface() {
             return;
         }
 
+        if (city.current == 'clear') {
+            setCity({
+                current: '',
+                list: []
+            });
+            setWeatherOutput('City, weather display and list is cleared');
+            setTimeout(() => setWeatherOutput(''), 2e3);
+            return;
+        }
+
         const cityRegexp = /^\p{L}[\p{L}\d\- ]*/u;
         if (!cityRegexp.test(city.current)) {
             setWeatherOutput('The city name should start/ consist only of letters and may also contain numbers, spaces and hyphens');
@@ -61,17 +81,15 @@ function PrimaryInterface() {
         }
 
         const config = {
-            headers: {
-                'Accept': '*/*',
-                'Authorization': user.signInUserSession.idToken.jwtToken,
-                'Content-Type': 'application/json; charset=UTF-8'
-            },
             response: true,
+            headers: {
+                'Authorization': user.signInUserSession.idToken.jwtToken
+            },
             queryStringParameters: {
                 city: city.current
             }
         };
-        console.log('config :>> ', config);
+        console.log('Request config :>> ', config);
         
         API.get('getCurrentWeather', '/getCurrentWeather', config)
             .then(response => {
@@ -85,17 +103,15 @@ function PrimaryInterface() {
             })
             .catch(error => {
                 console.log('Error :>> ', error);
-                setWeatherOutput('Network error. Try again a few minutes later.');
+                setWeatherOutput('Network error\nTry again in a few minutes');
             });
 
         setWeatherOutput('Loading...');
 
         if (!city.list.includes(city.current)) {
-            const cityListUpdate = [ ...city.list, city.current ].sort();
-
             setCity({
                 ...city,
-                list: cityListUpdate
+                list: [ ...city.list, city.current ].sort()
             });
         }
     };
@@ -105,13 +121,13 @@ function PrimaryInterface() {
         let _weatherOutput = '';
 
         _weatherOutput = `Weather for city ${city.current}\n`;        
-        _weatherOutput += `Date, time: ${new Date(weatherData.time).toLocaleString()}\n\n`;
+        _weatherOutput += `Date, time: ${ new Date(weatherData.time).toLocaleString() }\n\n`;
 
         _weatherOutput += `Weather conditions: ${weatherData.weatherCondition.type}\n`;
         _weatherOutput += `Temperature: ${weatherData.temperature}°C\n`;
         _weatherOutput += `Wind: ${weatherData.wind.speed} km/h\n`;
 
-        _weatherOutput += `Wind direction: ${weatherData.wind.direction
+        const windDirection = weatherData.wind.direction
             .replace(/(\w)(\w)?/, (match, l1, l2) => {
                 let output = match;
 
@@ -142,12 +158,13 @@ function PrimaryInterface() {
                 }
 
                 return output;
-            })}\n`;
+            })
+        _weatherOutput += `Wind direction: ${windDirection}\n`;
 
         _weatherOutput += `Pressure: ${weatherData.weatherCondition.pressure} Pa\n`;
         _weatherOutput += `Humidity: ${weatherData.weatherCondition.humidity}%\n\n`;
 
-        _weatherOutput += `${responseData.isCityCached ? 'Cached' : 'New'} weather data\n`;
+        _weatherOutput += `${ responseData.isCityCached ? 'Cached' : 'New' } weather data\n`;
 
         const processTime = responseData.processTime
             .reduce((sum, comp) => sum * 1e3 + comp / 1e6).toFixed(2);
@@ -164,22 +181,10 @@ function PrimaryInterface() {
             event.preventDefault();
 
             if (city.current) {
-                setCity({
-                    ...city,
-                    current: ''
-                });
-
-                setWeatherOutput('City input is cleared');
+                clearCurrentCity();
             } else {
-                setCity({
-                    ...city,
-                    list: []
-                });
-
-                setWeatherOutput('City list is cleared');
+                clearCityList();
             }
-
-            setTimeout(() => setWeatherOutput(''), 2e3);
         }
     };
     
@@ -194,7 +199,7 @@ function PrimaryInterface() {
             <GetWeatherForm
                 city={city}
                 onChange={changeCurrentCity}
-                onClear={clearInterface}
+                onClear={clearCurrentCity}
                 onKeyDown={handleKeyDown}
                 onSubmit={getWeatherData}
             />
