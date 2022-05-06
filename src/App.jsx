@@ -19,8 +19,14 @@ function PrimaryInterface() {
 
     const [ city, setCity ] = useState({
         current: '',
-        list: JSON.parse(localStorage.getItem('cityList')) || []
-    });    
+        list: JSON.parse(user.storage.cityList || '[]')
+    });
+
+    useEffect(() => {
+        localStorage.setItem('cityList', JSON.stringify(city.list))
+        console.log(localStorage);
+    }, [ city.list ]);
+    
 
     const changeCurrentCity = (event) => {
         setCity({
@@ -91,9 +97,6 @@ function PrimaryInterface() {
                 ...city,
                 list: cityListUpdate
             });
-
-            localStorage.setItem('cityList', JSON.stringify(cityListUpdate));
-            console.log('localStorage :>> ', localStorage);
         }
     };
 
@@ -165,15 +168,13 @@ function PrimaryInterface() {
                     ...city,
                     current: ''
                 });
+
                 setWeatherOutput('City input is cleared');
             } else {
                 setCity({
                     ...city,
                     list: []
                 });
-                
-                localStorage.removeItem('cityList');
-                console.log('localStorage :>> ', localStorage);
 
                 setWeatherOutput('City list is cleared');
             }
