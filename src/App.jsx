@@ -15,7 +15,6 @@ import '@aws-amplify/ui-react/styles.css';
 
 function PrimaryInterface() {
     const { user, signOut } = useAuthenticator(context => [ context.user ]);
-    console.log('user :>> ', user);
 
     const [ city, setCity ] = useState({
         current: '',
@@ -23,8 +22,7 @@ function PrimaryInterface() {
     });
 
     useEffect(() => {
-        localStorage.setItem('cityList', JSON.stringify(city.list))
-        console.log('cityList from localStorage :>> ', localStorage.getItem('cityList'));
+        localStorage.setItem('cityList', JSON.stringify(city.list));
     }, [ city.list ]);
 
 
@@ -92,12 +90,9 @@ function PrimaryInterface() {
                 'city': city.current
             }
         };
-        console.log('Request config :>> ', config);
         
         API.get('getCurrentWeather', '/getCurrentWeather', config)
             .then(response => {
-                console.log('Response :>> ', response);
-
                 if (response.data.status == 200) {
                     displayWeatherData(response.data);
                 } else {
