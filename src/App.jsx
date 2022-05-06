@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 
 import Header from './components/Header';
 import AccountStatus from './components/AccountStatus';
@@ -6,17 +6,20 @@ import GetWeatherForm from './components/GetWeatherForm';
 import WeatherDisplay from './components/WeatherDisplay';
 
 import { API } from 'aws-amplify';
-import { Authenticator } from '@aws-amplify/ui-react';
+import { Authenticator, useAuthenticator } from '@aws-amplify/ui-react';
 
 import './styles/App.css';
 import './styles/AmplifyUI.css';
 import '@aws-amplify/ui-react/styles.css';
 
 
-function App() {
+function PrimaryInterface() {
+    const { user, signOut } = useAuthenticator(context => [ context.user ]);
+    console.log('user :>> ', user);
+
     const [ city, setCity ] = useState({
         current: '',
-        list: JSON.parse(localStorage.getItem('citylist')) || []
+        list: JSON.parse(localStorage.getItem('cityList')) || []
     });    
 
     const changeCurrentCity = (event) => {
@@ -26,7 +29,7 @@ function App() {
         });
     };
 
-    const clearCurrentCityWeather = () => {
+    const clearInterface = () => {
         setCity({
             ...city,
             current: ''
@@ -36,7 +39,7 @@ function App() {
 
 
     const [ weatherOutput, setWeatherOutput ] = useState('');
-    
+
     const getWeatherData = () => {
         if (!city.current) {
             setWeatherOutput('No city specified');
@@ -52,11 +55,17 @@ function App() {
         }
 
         const config = {
+            headers: {
+                'Accept': '*/*',
+                'Authorization': user.signInUserSession.idToken.jwtToken,
+                'Content-Type': 'application/json; charset=UTF-8'
+            },
             response: true,
             queryStringParameters: {
                 city: city.current
             }
         };
+        console.log('config :>> ', config);
         
         API.get('getCurrentWeather', '/getCurrentWeather', config)
             .then(response => {
@@ -76,52 +85,24 @@ function App() {
         setWeatherOutput('Loading...');
 
         if (!city.list.includes(city.current)) {
-            const _cityList = [ ...city.list, city.current ].sort();
+            const cityListUpdate = [ ...city.list, city.current ].sort();
 
             setCity({
                 ...city,
-                list: _cityList
+                list: cityListUpdate
             });
 
-            localStorage.setItem('citylist', JSON.stringify(_cityList));
+            localStorage.setItem('cityList', JSON.stringify(cityListUpdate));
             console.log('localStorage :>> ', localStorage);
-        }
-    };
-
-    const handleKeyDown = (event) => {
-        if (event.code == 'Enter') {
-            getWeatherData();
-        }
-        else if (event.ctrlKey && event.code == 'KeyL') {
-            event.preventDefault();
-
-            if (city.current) {
-                setCity({
-                    ...city,
-                    current: ''
-                });
-                setWeatherOutput('City input is cleared');
-
-            } else {
-                setCity({
-                    ...city,
-                    list: []
-                });
-                localStorage.clear();
-                setWeatherOutput('City list is cleared');
-            }
-
-            setTimeout(() => setWeatherOutput(''), 2e3);
         }
     };
 
     const displayWeatherData = (responseData) => {
         const weatherData = JSON.parse(responseData.response);
+        let _weatherOutput = '';
 
-        let _weatherOutput = `Weather for city ${city.current}\n`;
-        
-        const time = new Date(weatherData.time).toLocaleString();
-        _weatherOutput += `Date, time: ${time}\n\n`;
+        _weatherOutput = `Weather for city ${city.current}\n`;        
+        _weatherOutput += `Date, time: ${new Date(weatherData.time).toLocaleString()}\n\n`;
 
         _weatherOutput += `Weather conditions: ${weatherData.weatherCondition.type}\n`;
         _weatherOutput += `Temperature: ${weatherData.temperature}°C\n`;
@@ -163,11 +144,7 @@ function App() {
         _weatherOutput += `Pressure: ${weatherData.weatherCondition.pressure} Pa\n`;
         _weatherOutput += `Humidity: ${weatherData.weatherCondition.humidity}%\n\n`;
 
-        if (responseData.isCityCached) {
-            _weatherOutput += 'Cached weather data\n';
-        } else {
-            _weatherOutput += 'New weather data\n';
-        }
+        _weatherOutput += `${responseData.isCityCached ? 'Cached' : 'New'} weather data\n`;
 
         const processTime = responseData.processTime
             .reduce((sum, comp) => sum * 1e3 + comp / 1e6).toFixed(2);
@@ -175,30 +152,66 @@ function App() {
 
         setWeatherOutput(_weatherOutput);
     };
+
+    const handleKeyDown = (event) => {
+        if (event.code == 'Enter') {
+            getWeatherData();
+        }
+        else if (event.ctrlKey && event.code == 'KeyL') {
+            event.preventDefault();
+
+            if (city.current) {
+                setCity({
+                    ...city,
+                    current: ''
+                });
+                setWeatherOutput('City input is cleared');
+            } else {
+                setCity({
+                    ...city,
+                    list: []
+                });
+                
+                localStorage.removeItem('cityList');
+                console.log('localStorage :>> ', localStorage);
+
+                setWeatherOutput('City list is cleared');
+            }
+
+            setTimeout(() => setWeatherOutput(''), 2e3);
+        }
+    };
     
 
+    return (
+        <Authenticator.Provider>
+            <Header />
+            <AccountStatus
+                user={user}
+                signOut={signOut}
+            />
+            <GetWeatherForm
+                city={city}
+                onChange={changeCurrentCity}
+                onClear={clearInterface}
+                onKeyDown={handleKeyDown}
+                onSubmit={getWeatherData}
+            />
+            <WeatherDisplay
+                weatherOutput={weatherOutput}
+            />
+        </Authenticator.Provider>
+    );
+}
+
+function App() {
     return (
         <div className="app">
             <Authenticator
                 components={{ Header }}
-            >{ account => (
-                <>
-                    <Header />
-                    <AccountStatus
-                        { ...account }
-                    />
-                    <GetWeatherForm
-                        city={city}
-                        onChange={changeCurrentCity}
-                        onClear={clearCurrentCityWeather}
-                        onKeyDown={handleKeyDown}
-                        onSubmit={getWeatherData}
-                    />
-                    <WeatherDisplay
-                        weatherOutput={weatherOutput}
-                    />
-                </>
-            )}</Authenticator>
+            >
+                <PrimaryInterface />
+            </Authenticator>
         </div>
     );
 }
