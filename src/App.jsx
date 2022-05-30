@@ -161,7 +161,9 @@ function PrimaryInterface() {
         _weatherOutput += `Pressure: ${weatherData.weatherCondition.pressure} Pa\n`;
         _weatherOutput += `Humidity: ${weatherData.weatherCondition.humidity}%\n\n`;
 
-        _weatherOutput += `${ responseData.isCached ? 'Cached' : 'New' } weather data\n`;
+        // Disabled due to paid services
+        // _weatherOutput += `${ responseData.isCached ? 'Cached' : 'New' } weather data\n`;
+        _weatherOutput += 'New weather data\n';
 
         const processTime = responseData.processTime
             .reduce((sum, comp) => sum * 1e3 + comp / 1e6).toFixed(2);

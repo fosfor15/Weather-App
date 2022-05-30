@@ -1,6 +1,6 @@
 {
     "httpMethod": "GET",
-    "path": "/v1/getCurrentWeather",
+    "path": "/getCurrentWeather",
     "queryStringParameters": {
         "city": "Paris"
     },

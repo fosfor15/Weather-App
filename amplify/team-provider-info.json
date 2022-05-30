@@ -15,11 +15,32 @@
       "function": {
         "getCurrentWeather": {
           "deploymentBucketName": "amplify-weatherapp-dev-224012-deployment",
-          "s3Key": "amplify-builds/getCurrentWeather-726e536b49476d58776f-build.zip"
+          "s3Key": "amplify-builds/getCurrentWeather-6d4d344f4b3141302f65-build.zip"
         }
       },
       "auth": {
         "weatherapp76d2c76b": {}
+      }
+    }
+  },
+  "prod": {
+    "awscloudformation": {
+      "AuthRoleName": "amplify-weatherapp-prod-192950-authRole",
+      "UnauthRoleArn": "arn:aws:iam::543295793859:role/amplify-weatherapp-prod-192950-unauthRole",
+      "AuthRoleArn": "arn:aws:iam::543295793859:role/amplify-weatherapp-prod-192950-authRole",
+      "Region": "eu-central-1",
+      "DeploymentBucketName": "amplify-weatherapp-prod-192950-deployment",
+      "UnauthRoleName": "amplify-weatherapp-prod-192950-unauthRole",
+      "StackName": "amplify-weatherapp-prod-192950",
+      "StackId": "arn:aws:cloudformation:eu-central-1:543295793859:stack/amplify-weatherapp-prod-192950/c1e9a120-cd59-11ec-94d6-02736d244d8c",
+      "AmplifyAppId": "d1xzriqkuasnni"
+    },
+    "categories": {
+      "auth": {
+        "weatherapp76d2c76b": {}
+      },
+      "function": {
+        "getCurrentWeather": {}
       }
     }
   }

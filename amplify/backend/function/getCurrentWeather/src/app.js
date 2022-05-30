@@ -3,10 +3,14 @@ const express = require('express');
 const bodyParser = require('body-parser');
 
 const https = require('https');
-const redis = require('redis');
+
+// Disabled due to paid service
+// const redis = require('redis');
 
 const awsServerlessExpressMiddleware = require('aws-serverless-express/middleware');
-const { SecretsManagerClient, GetSecretValueCommand } = require('@aws-sdk/client-secrets-manager');
+
+// Disabled due to paid service
+// const { SecretsManagerClient, GetSecretValueCommand } = require('@aws-sdk/client-secrets-manager');
 
 
 // Declaring a new express app
@@ -25,19 +29,21 @@ app.use((req, res, next) => {
 
 
 // Processing of SecretsManager
-const secretManagerClient = new SecretsManagerClient({
+// Disabled due to paid service
+/* const secretManagerClient = new SecretsManagerClient({
     region: 'eu-central-1'
 });
 const getSecretValueCommand = new GetSecretValueCommand({
     SecretId: 'arn:aws:secretsmanager:eu-central-1:543295793859:secret:open-weather-api-key-JSODzJ'
-});
+}); */
 
 
 // Processing of ElastiCache and Redis
-const redisClient = redis.createClient({
+// Disabled due to paid service
+/* const redisClient = redis.createClient({
     url: 'redis://weather-app-cache.blzsgd.ng.0001.euc1.cache.amazonaws.com:6379'
 });
-redisClient.connect();
+redisClient.connect(); */
 
 
 // Error class for describing server errors
@@ -71,7 +77,8 @@ app.get('/getCurrentWeather*', async (request, response) => {
         let processTime = process.hrtime();
 
         // Check is weather data for specified city cached
-        const isWeatherDataCached = await redisClient.exists(city);
+        // Disabled due to paid service
+        /* const isWeatherDataCached = await redisClient.exists(city);
 
         // If weather data for specified city cached
         if (isWeatherDataCached) {
@@ -81,20 +88,22 @@ app.get('/getCurrentWeather*', async (request, response) => {
         }
         // If needed to get new weather data from OpenWeather
         else {
-            // Get and convert new weather data from OpenWeather
-            const newWeatherData = await getNewWeatherData(city);
-            weatherData = convertWeatherData(newWeatherData);
-            processTime = process.hrtime(processTime);
-
-            // Saving to cache new weather data
-            redisClient.set(city, weatherData, { EX: 60, NX: true });
         }
+        // Saving to cache new weather data
+        // redisClient.set(city, weatherData, { EX: 60, NX: true });
+        */
+
+        // Get and convert new weather data from OpenWeather
+        const newWeatherData = await getNewWeatherData(city);
+        weatherData = convertWeatherData(newWeatherData);
+        processTime = process.hrtime(processTime);
+
 
         // Sending good response
         response.json({
             status: 200,
             payload: weatherData,
-            isCached: isWeatherDataCached,
+            // isCached: isWeatherDataCached,
             processTime
         });
     }
@@ -115,8 +124,11 @@ module.exports = app;
 
 // Async function for sending request to OpenWeather API for fetching new weather data
 async function getNewWeatherData(city) {
-    const secretManagerResponse = await secretManagerClient.send(getSecretValueCommand);
-    const apiKey = JSON.parse(secretManagerResponse.SecretString).apiKey;
+    // Disabled due to paid service
+    /* const secretManagerResponse = await secretManagerClient.send(getSecretValueCommand);
+    const apiKey = JSON.parse(secretManagerResponse.SecretString).apiKey; */
+    
+    const apiKey = 'f3866bb65789d68f7aab7d65dae1dd5f';
     
     const url = `https://api.openweathermap.org/data/2.5/weather?q=${city}&appid=${apiKey}`;
     
@@ -171,7 +183,7 @@ function convertWeatherData(weatherResponse) {
             case (degDirection >= 293 && degDirection <= 337):
                 return 'NW';
         }
-    }
+    };
 
     const weatherData = {
         city: weatherResponse.name,
